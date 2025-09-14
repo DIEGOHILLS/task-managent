@@ -207,7 +207,7 @@ const TaskManager = () => {
       {/* Footer */}
       <footer className="bg-card border-t border-border mt-12">
         <div className="max-w-6xl mx-auto px-4 py-6 text-center text-muted-foreground">
-          <p>&copy; 2024 Task Manager. Built with modern web technologies.</p>
+          <p>&copy;My Task Manager</p>
         </div>
       </footer>
     </div>
