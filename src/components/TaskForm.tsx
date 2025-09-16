@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/dist/style.css';
 import type { Task } from '../pages/Index';
 
 interface TaskFormProps {
@@ -17,6 +19,7 @@ interface FormData {
   description: string;
   priority: 'low' | 'medium' | 'high';
   status: 'todo' | 'in-progress' | 'completed';
+  deadline?: Date;
 }
 
 interface FormErrors {
@@ -30,12 +33,26 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) 
     description: '',
     priority: 'medium',
     status: 'todo',
+    deadline: undefined,
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
-  // Update form when editing a task
+  const calendarRef = useRef<HTMLDivElement>(null);
+
+  // Close calendar if clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (calendarRef.current && !calendarRef.current.contains(event.target as Node)) {
+        setCalendarOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   useEffect(() => {
     if (task) {
       setFormData({
@@ -43,6 +60,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) 
         description: task.description,
         priority: task.priority,
         status: task.status,
+        deadline: task.deadline ? new Date(task.deadline) : undefined,
       });
     } else {
       setFormData({
@@ -50,6 +68,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) 
         description: '',
         priority: 'medium',
         status: 'todo',
+        deadline: undefined,
       });
     }
     setErrors({});
@@ -57,22 +76,13 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) 
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
+    if (!formData.title.trim()) newErrors.title = 'Title is required';
+    else if (formData.title.trim().length < 3) newErrors.title = 'Title must be at least 3 characters long';
+    else if (formData.title.trim().length > 100) newErrors.title = 'Title must be less than 100 characters';
 
-    if (!formData.title.trim()) {
-      newErrors.title = 'Title is required';
-    } else if (formData.title.trim().length < 3) {
-      newErrors.title = 'Title must be at least 3 characters long';
-    } else if (formData.title.trim().length > 100) {
-      newErrors.title = 'Title must be less than 100 characters';
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = 'Description is required';
-    } else if (formData.description.trim().length < 10) {
-      newErrors.description = 'Description must be at least 10 characters long';
-    } else if (formData.description.trim().length > 500) {
-      newErrors.description = 'Description must be less than 500 characters';
-    }
+    if (!formData.description.trim()) newErrors.description = 'Description is required';
+    else if (formData.description.trim().length < 10) newErrors.description = 'Description must be at least 10 characters long';
+    else if (formData.description.trim().length > 500) newErrors.description = 'Description must be less than 500 characters';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -80,43 +90,24 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm()) return;
     setIsSubmitting(true);
-    
-    // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     onSubmit({
       title: formData.title.trim(),
       description: formData.description.trim(),
       priority: formData.priority,
       status: formData.status,
+      deadline: formData.deadline,
     });
 
-    // Reset form if adding new task
-    if (!task) {
-      setFormData({
-        title: '',
-        description: '',
-        priority: 'medium',
-        status: 'todo',
-      });
-    }
-    
+    if (!task) setFormData({ title: '', description: '', priority: 'medium', status: 'todo', deadline: undefined });
     setIsSubmitting(false);
   };
 
   const handleCancel = () => {
-    setFormData({
-      title: '',
-      description: '',
-      priority: 'medium',
-      status: 'todo',
-    });
+    setFormData({ title: '', description: '', priority: 'medium', status: 'todo', deadline: undefined });
     setErrors({});
     onCancel?.();
   };
@@ -141,11 +132,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+
       {/* Title Field */}
       <div className="space-y-2">
-        <Label htmlFor="title" className="text-sm font-medium text-foreground">
-          Task Title *
-        </Label>
+        <Label htmlFor="title" className="text-sm font-medium text-foreground">Task Title *</Label>
         <Input
           id="title"
           type="text"
@@ -155,19 +145,13 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) 
           className={`transition-all duration-300 transform hover:scale-[1.01] focus:scale-[1.02] ${errors.title ? 'border-destructive focus:ring-destructive animate-pulse' : 'focus:ring-primary focus:shadow-lg'}`}
           maxLength={100}
         />
-        {errors.title && (
-          <p className="text-sm text-destructive animate-fade-in">{errors.title}</p>
-        )}
-        <p className="text-xs text-muted-foreground">
-          {formData.title.length}/100 characters
-        </p>
+        {errors.title && <p className="text-sm text-destructive animate-fade-in">{errors.title}</p>}
+        <p className="text-xs text-muted-foreground">{formData.title.length}/100 characters</p>
       </div>
 
       {/* Description Field */}
       <div className="space-y-2">
-        <Label htmlFor="description" className="text-sm font-medium text-foreground">
-          Description *
-        </Label>
+        <Label htmlFor="description" className="text-sm font-medium text-foreground">Description *</Label>
         <Textarea
           id="description"
           value={formData.description}
@@ -176,67 +160,68 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) 
           className={`min-h-[100px] transition-all duration-300 transform hover:scale-[1.01] focus:scale-[1.02] ${errors.description ? 'border-destructive focus:ring-destructive animate-pulse' : 'focus:ring-primary focus:shadow-lg'}`}
           maxLength={500}
         />
-        {errors.description && (
-          <p className="text-sm text-destructive animate-fade-in">{errors.description}</p>
+        {errors.description && <p className="text-sm text-destructive animate-fade-in">{errors.description}</p>}
+        <p className="text-xs text-muted-foreground">{formData.description.length}/500 characters</p>
+      </div>
+
+      {/* Deadline Field */}
+      <div className="space-y-2 relative" ref={calendarRef}>
+        <Label className="text-sm font-medium text-foreground">Deadline</Label>
+        <Button
+          type="button"
+          onClick={() => setCalendarOpen(prev => !prev)}
+          variant="outline"
+          className="w-full text-left"
+        >
+          {formData.deadline ? formData.deadline.toLocaleDateString() : 'Select a deadline'}
+        </Button>
+        {calendarOpen && (
+          <div className="absolute z-10 mt-2 bg-white border rounded-lg shadow-lg">
+            <DayPicker
+              mode="single"
+              selected={formData.deadline}
+              onDayClick={(date) => {
+                setFormData(prev => ({ ...prev, deadline: date }));
+                setCalendarOpen(false);
+              }}
+            />
+          </div>
         )}
-        <p className="text-xs text-muted-foreground">
-          {formData.description.length}/500 characters
-        </p>
       </div>
 
       {/* Priority Field */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium text-foreground">
-          Priority
-        </Label>
+        <Label className="text-sm font-medium text-foreground">Priority</Label>
         <Select
           value={formData.priority}
-          onValueChange={(value: 'low' | 'medium' | 'high') => 
-            setFormData(prev => ({ ...prev, priority: value }))
-          }
+          onValueChange={(value: 'low' | 'medium' | 'high') => setFormData(prev => ({ ...prev, priority: value }))}
         >
           <SelectTrigger className="w-full">
             <SelectValue className={getPriorityColor(formData.priority)} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="low" className="text-success">
-              🟢 Low Priority
-            </SelectItem>
-            <SelectItem value="medium" className="text-warning">
-              🟡 Medium Priority
-            </SelectItem>
-            <SelectItem value="high" className="text-destructive">
-              🔴 High Priority
-            </SelectItem>
+            <SelectItem value="low" className="text-success">🟢 Low Priority</SelectItem>
+            <SelectItem value="medium" className="text-warning">🟡 Medium Priority</SelectItem>
+            <SelectItem value="high" className="text-destructive">🔴 High Priority</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* Status Field (only show when editing) */}
+      {/* Status Field */}
       {task && (
         <div className="space-y-2">
-          <Label className="text-sm font-medium text-foreground">
-            Status
-          </Label>
+          <Label className="text-sm font-medium text-foreground">Status</Label>
           <Select
             value={formData.status}
-            onValueChange={(value: 'todo' | 'in-progress' | 'completed') => 
-              setFormData(prev => ({ ...prev, status: value }))
-            }
+            onValueChange={(value: 'todo' | 'in-progress' | 'completed') => setFormData(prev => ({ ...prev, status: value }))}
           >
             <SelectTrigger className="w-full">
               <SelectValue className={getStatusColor(formData.status)} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="todo" className="text-primary">
-                📋 To Do
-              </SelectItem>
-              <SelectItem value="in-progress" className="text-warning">
-                ⚠️ In Progress
-              </SelectItem>
-              <SelectItem value="completed" className="text-success">
-                ✅ Completed
-              </SelectItem>
+              <SelectItem value="todo" className="text-primary">📋 To Do</SelectItem>
+              <SelectItem value="in-progress" className="text-warning">⚠️ In Progress</SelectItem>
+              <SelectItem value="completed" className="text-success">✅ Completed</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -258,7 +243,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) 
             task ? '✏️ Update Task' : '➕ Create Task'
           )}
         </Button>
-        
         {task && onCancel && (
           <Button
             type="button"
