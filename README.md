@@ -1,34 +1,34 @@
-# Task Manager Dashboard
+# Task Management App
 
-A modern, responsive task management dashboard built with React, Vite, and TailwindCSS. This project showcases clean architecture, component-based design, and deployment on Render.
+A simple and modern task management application built to help you create, organize, and manage your tasks efficiently. This project is fully responsive and easy to customize.
 
-## Features
+---
 
-- Create, edit, and delete tasks
-- Organize tasks by projects or categories
-- Responsive design for mobile and desktop
-- Dark mode toggle
-- Fast development with Vite and optimized builds
-- Continuous deployment with Render
+## 🚀 Features
 
-## Tech Stack
+- Add, edit, and delete tasks  
+- Organize tasks by categories or projects  
+- Mark tasks as complete/incomplete  
+- Responsive and mobile-friendly UI  
+- Fast build and development with Vite  
+- Styled with Tailwind CSS  
 
-- React + TypeScript  
-- Vite for build tooling  
-- TailwindCSS for styling  
-- shadcn/ui component library  
-- Deployed on Render
+---
 
-## Getting Started
+## 🛠️ Tech Stack
 
-### Prerequisites
+- **Frontend:** React + TypeScript  
+- **Build Tool:** Vite  
+- **Styling:** Tailwind CSS (with shadcn/ui components if installed)  
 
-- Node.js v18+
-- npm
+---
 
-### Installation
+## 📦 Installation
 
-```bash
+1. Clone this repository  
+   ```bash
+   git clone https://github.com/DIEGOHILLS/task-managent.git
+   cd task-managent
+
 npm install
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+npm run dev
