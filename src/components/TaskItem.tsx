@@ -21,68 +21,32 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   const getPriorityConfig = (priority: Task['priority']) => {
     switch (priority) {
       case 'high':
-        return {
-          color: 'bg-destructive text-destructive-foreground',
-          icon: '🔴',
-          label: 'High',
-        };
+        return { color: 'bg-destructive text-destructive-foreground', icon: '🔴', label: 'High' };
       case 'medium':
-        return {
-          color: 'bg-warning text-warning-foreground',
-          icon: '🟡',
-          label: 'Medium',
-        };
+        return { color: 'bg-warning text-warning-foreground', icon: '🟡', label: 'Medium' };
       case 'low':
-        return {
-          color: 'bg-success text-success-foreground',
-          icon: '🟢',
-          label: 'Low',
-        };
+        return { color: 'bg-success text-success-foreground', icon: '🟢', label: 'Low' };
     }
   };
 
   const getStatusConfig = (status: Task['status']) => {
     switch (status) {
       case 'todo':
-        return {
-          color: 'bg-primary text-primary-foreground',
-          icon: '📋',
-          label: 'To Do',
-          nextAction: 'Start Task',
-        };
+        return { color: 'bg-primary text-primary-foreground', icon: '📋', label: 'To Do', nextAction: 'Start Task' };
       case 'in-progress':
-        return {
-          color: 'bg-warning text-warning-foreground',
-          icon: '⚠️',
-          label: 'In Progress',
-          nextAction: 'Complete Task',
-        };
+        return { color: 'bg-warning text-warning-foreground', icon: '⚠️', label: 'In Progress', nextAction: 'Complete Task' };
       case 'completed':
-        return {
-          color: 'bg-success text-success-foreground',
-          icon: '✅',
-          label: 'Completed',
-          nextAction: 'Reopen Task',
-        };
+        return { color: 'bg-success text-success-foreground', icon: '✅', label: 'Completed', nextAction: 'Reopen Task' };
     }
   };
 
   const priorityConfig = getPriorityConfig(task.priority);
   const statusConfig = getStatusConfig(task.status);
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  const formatDate = (date: Date) =>
+    date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-  const handleDelete = () => {
-    onDelete(task.id);
-  };
+  const handleDelete = () => onDelete(task.id);
 
   return (
     <div
@@ -117,10 +81,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 
       {/* Description */}
       <div className="mb-4">
-        <p className={`
-          text-muted-foreground leading-relaxed
-          ${task.status === 'completed' ? 'opacity-70' : ''}
-        `}>
+        <p className={`text-muted-foreground leading-relaxed ${task.status === 'completed' ? 'opacity-70' : ''}`}>
           {task.description}
         </p>
       </div>
@@ -128,13 +89,12 @@ export const TaskItem: React.FC<TaskItemProps> = ({
       {/* Metadata */}
       <div className="text-xs text-muted-foreground mb-4 space-y-1">
         <div className="flex items-center gap-4 flex-wrap">
-          <span className="flex items-center gap-1">
-            📅 Created: {formatDate(task.createdAt)}
-          </span>
+          <span className="flex items-center gap-1">📅 Created: {formatDate(new Date(task.createdAt))}</span>
           {task.updatedAt.getTime() !== task.createdAt.getTime() && (
-            <span className="flex items-center gap-1">
-              ✏️ Updated: {formatDate(task.updatedAt)}
-            </span>
+            <span className="flex items-center gap-1">✏️ Updated: {formatDate(new Date(task.updatedAt))}</span>
+          )}
+          {task.deadline && (
+            <span className="flex items-center gap-1">⏰ Deadline: {formatDate(new Date(task.deadline))}</span>
           )}
         </div>
       </div>
@@ -149,7 +109,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         >
           {statusConfig.nextAction}
         </Button>
-        
+
         <Button
           onClick={() => onEdit(task)}
           variant="outline"
@@ -158,7 +118,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         >
           ✏️ Edit
         </Button>
-        
+
         <Button
           onClick={handleDelete}
           variant="outline"
